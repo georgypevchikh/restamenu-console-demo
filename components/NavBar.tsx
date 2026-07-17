@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { usePathname } from "next/navigation";
 
 interface NavBarProps {
   restaurantName: string;
@@ -13,14 +12,6 @@ interface NavBarProps {
 
 export default function NavBar({ restaurantName, restaurantRegion, role, userEmail }: NavBarProps) {
   const pathname = usePathname();
-  const router = useRouter();
-
-  async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
-  }
 
   return (
     <nav className="nav">
@@ -37,9 +28,11 @@ export default function NavBar({ restaurantName, restaurantRegion, role, userEma
         </Link>
         <span style={{ color: "var(--border)" }}>|</span>
         <span style={{ color: "var(--muted)", fontSize: 12 }}>{userEmail}</span>
-        <button className="btn-ghost" style={{ padding: "4px 10px", fontSize: 12 }} onClick={handleLogout}>
-          Sign out
-        </button>
+        <form action="/api/auth/signout" method="POST" style={{ display: "contents" }}>
+          <button type="submit" className="btn-ghost" style={{ padding: "4px 10px", fontSize: 12 }}>
+            Sign out
+          </button>
+        </form>
       </div>
     </nav>
   );

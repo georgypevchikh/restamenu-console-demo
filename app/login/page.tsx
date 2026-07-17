@@ -6,9 +6,9 @@ import { createClient } from "@/lib/supabase/client";
 
 const DEMO_ACCOUNTS = [
   { label: "🍕 Bella Italia — Manager", email: "manager@bella-italia.demo", role: "Manager", restaurant: "Bella Italia" },
-  { label: "🍕 Bella Italia — Staff", email: "staff@bella-italia.demo", role: "Staff", restaurant: "Bella Italia" },
+  { label: "🍕 Bella Italia — Team", email: "staff@bella-italia.demo", role: "Team", restaurant: "Bella Italia" },
   { label: "🍣 Sakura House — Manager", email: "manager@sakura-house.demo", role: "Manager", restaurant: "Sakura House" },
-  { label: "🍣 Sakura House — Staff", email: "staff@sakura-house.demo", role: "Staff", restaurant: "Sakura House" },
+  { label: "🍣 Sakura House — Team", email: "staff@sakura-house.demo", role: "Team", restaurant: "Sakura House" },
 ];
 
 const DEMO_PASSWORD = "demo1234";

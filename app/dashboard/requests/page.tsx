@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import RequestTable from "@/components/RequestTable";
-import type { PurchaseRequest } from "@/lib/types";
+import NewRequestForm from "@/components/NewRequestForm";
+import type { PurchaseRequest, Product } from "@/lib/types";
 
 export default async function RequestsPage() {
   const supabase = await createClient();
@@ -15,6 +16,13 @@ export default async function RequestsPage() {
     .single();
 
   if (!membership) redirect("/login");
+
+  const { data: products } = await supabase
+    .from("products")
+    .select("id, name, unit")
+    .eq("restaurant_id", membership.restaurant_id)
+    .eq("is_active", true)
+    .order("name");
 
   const { data: requests } = await supabase
     .from("purchase_requests")
@@ -36,6 +44,10 @@ export default async function RequestsPage() {
         <span style={{ fontSize: 12, color: "var(--muted)" }}>
           Latest 50 · tenant-isolated via RLS
         </span>
+      </div>
+
+      <div className="card" style={{ marginBottom: 16 }}>
+        <NewRequestForm products={(products ?? []) as Product[]} />
       </div>
 
       <div className="stat-grid">

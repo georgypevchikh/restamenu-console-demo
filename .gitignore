@@ -1,8 +1,18 @@
-.next/
 node_modules/
+
+# build output / artifacts
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# secrets
 .env.local
 .env.*.local
 *.pem
 *.key
-out/
+
+# tooling scratch
 .vercel
+.claude/
+supabase/.temp/

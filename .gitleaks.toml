@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Ignore the literal truncated JWT placeholder from historical .env.example revisions"
+regexTarget = "secret"
+paths = ['''^\.env\.example$''']
+regexes = ['''^eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.\.\.$''']

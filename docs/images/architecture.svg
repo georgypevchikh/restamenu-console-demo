@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#F7F7F3"/>
+  <style>
+    text{font-family:Arial,sans-serif}.title{font-size:58px;font-weight:700;fill:#17181B}.sub{font-size:24px;font-weight:400;fill:#62656D}.h{font-size:28px;font-weight:700;fill:#17181B}.p{font-size:22px;font-weight:400;fill:#62656D}.tag{font-size:18px;font-weight:700;letter-spacing:1px;fill:#5A55E7}.box{fill:#FFFFFF;stroke:#DADAE2;stroke-width:2}.line{stroke:#7B77F0;stroke-width:5;fill:none}.shield{fill:#E8E7FF;stroke:#7B77F0;stroke-width:2}
+  </style>
+  <text x="110" y="115" class="tag">RESTAMENU CONSOLE · MULTI-TENANT ARCHITECTURE</text>
+  <text x="110" y="185" class="title">Tenant isolation lives in Postgres.</text>
+  <text x="110" y="230" class="sub">The client does not decide which restaurant's rows it may see.</text>
+  <rect x="110" y="340" width="310" height="250" rx="28" class="box"/>
+  <text x="150" y="405" class="h">Browser</text><text x="150" y="450" class="p">Authenticated session</text><text x="150" y="485" class="p">Manager / Team role</text><text x="150" y="535" class="p">Bella Italia or Sakura</text>
+  <rect x="645" y="340" width="310" height="250" rx="28" class="box"/>
+  <text x="685" y="405" class="h">Next.js 16</text><text x="685" y="450" class="p">Server Components</text><text x="685" y="485" class="p">Supabase SSR client</text><text x="685" y="535" class="p">Vercel deployment</text>
+  <rect x="1180" y="310" width="310" height="310" rx="28" class="box"/>
+  <text x="1220" y="380" class="h">Postgres</text><text x="1220" y="425" class="p">10-table domain model</text><text x="1220" y="460" class="p">RLS on every tenant table</text><text x="1220" y="495" class="p">Role-based write policies</text>
+  <rect x="1220" y="535" width="230" height="55" rx="27" class="shield"/><text x="1252" y="571" class="tag">DATABASE GATE</text>
+  <path d="M420 465H645" class="line"/><path d="M955 465H1180" class="line"/><path d="M625 450l20 15-20 15M1160 450l20 15-20 15" class="line"/>
+  <text x="110" y="760" class="h">Even a wrong restaurant_id cannot cross the boundary.</text>
+  <text x="110" y="805" class="sub">RLS returns zero rows or rejects the write before data reaches the application.</text>
+  <text x="1360" y="830" class="tag">@GEORGYPEVCHIKH</text>
+</svg>

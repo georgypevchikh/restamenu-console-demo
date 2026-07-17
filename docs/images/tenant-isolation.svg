@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#F7F7F3"/>
+  <style>text{font-family:Arial,sans-serif}.title{font-size:58px;font-weight:700;fill:#17181B}.sub{font-size:24px;font-weight:400;fill:#62656D}.h{font-size:30px;font-weight:700;fill:#17181B}.p{font-size:22px;font-weight:400;fill:#62656D}.tag{font-size:18px;font-weight:700;letter-spacing:1px;fill:#5A55E7}.box{fill:#FFF;stroke:#DADAE2;stroke-width:2}.gate{fill:#E8E7FF;stroke:#7B77F0;stroke-width:2}.deny{stroke:#D84848;stroke-width:7}.line{stroke:#7B77F0;stroke-width:5;fill:none}</style>
+  <text x="110" y="115" class="tag">RESTAMENU · ROW-LEVEL SECURITY</text>
+  <text x="110" y="185" class="title">Two restaurants. One database. Zero shared rows.</text>
+  <text x="110" y="230" class="sub">Tenant isolation is enforced for reads and writes at database level.</text>
+  <rect x="110" y="330" width="430" height="330" rx="30" class="box"/><text x="155" y="405" class="h">🍕 Bella Italia</text><text x="155" y="460" class="p">Products · categories</text><text x="155" y="500" class="p">Purchase requests</text><text x="155" y="540" class="p">Managers · team members</text><rect x="155" y="580" width="230" height="45" rx="22" class="gate"/><text x="183" y="609" class="tag">restaurant_id = A</text>
+  <rect x="1060" y="330" width="430" height="330" rx="30" class="box"/><text x="1105" y="405" class="h">🍣 Sakura House</text><text x="1105" y="460" class="p">Products · categories</text><text x="1105" y="500" class="p">Purchase requests</text><text x="1105" y="540" class="p">Managers · team members</text><rect x="1105" y="580" width="230" height="45" rx="22" class="gate"/><text x="1133" y="609" class="tag">restaurant_id = B</text>
+  <rect x="660" y="365" width="280" height="260" rx="30" class="gate"/><text x="720" y="435" class="h">Postgres RLS</text><text x="705" y="490" class="p">is_member()</text><text x="705" y="530" class="p">is_manager()</text><text x="705" y="570" class="p">7 isolation tests</text>
+  <path d="M540 495H660M940 495H1060" class="line"/><line x1="755" y1="690" x2="845" y2="780" class="deny"/><line x1="845" y1="690" x2="755" y2="780" class="deny"/>
+  <text x="610" y="840" class="h">Cross-tenant access rejected</text><text x="1360" y="830" class="tag">@GEORGYPEVCHIKH</text>
+</svg>

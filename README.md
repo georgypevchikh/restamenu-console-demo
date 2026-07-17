@@ -2,7 +2,7 @@
 
 > Multi-tenant restaurant management console. Built to demonstrate **Supabase Row Level Security** enforcing tenant isolation at the database layer — not the application layer.
 
-**Live demo:** [restamenu-console-demo.vercel.app](https://restamenu-console-demo.vercel.app) *(link after deploy)*
+**Live demo:** [restamenu-console-demo.vercel.app](https://restamenu-console-demo.vercel.app)
 
 **Tech stack:** Next.js 15 · TypeScript · Supabase (Auth + Postgres + RLS) · Vercel · GitHub Actions
 
@@ -75,9 +75,9 @@ After creation, copy their UUIDs and run:
 -- Replace <UUID_*> with actual auth.users IDs
 insert into public.restaurant_members (user_id, restaurant_id, role) values
   ('<UUID_BELLA_MANAGER>', '11111111-0000-0000-0000-000000000001', 'manager'),
-  ('<UUID_BELLA_STAFF>',   '11111111-0000-0000-0000-000000000001', 'staff'),
+  ('<UUID_BELLA_STAFF>',   '11111111-0000-0000-0000-000000000001', 'team'),
   ('<UUID_SAKURA_MANAGER>','22222222-0000-0000-0000-000000000002', 'manager'),
-  ('<UUID_SAKURA_STAFF>',  '22222222-0000-0000-0000-000000000002', 'staff');
+  ('<UUID_SAKURA_STAFF>',  '22222222-0000-0000-0000-000000000002', 'team');
 
 -- Also update profiles (created automatically by trigger)
 update public.profiles set full_name = 'Marco (Manager)' where id = '<UUID_BELLA_MANAGER>';

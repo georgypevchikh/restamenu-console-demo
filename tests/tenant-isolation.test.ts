@@ -92,6 +92,36 @@ describe("Tenant isolation — RLS", () => {
     await client.auth.signOut();
   });
 
+  it("Bella Italia manager cannot write a request into Sakura House", async () => {
+    // Reading is only half of isolation: a tenant must not be able to plant
+    // rows in another tenant's account either. The app never builds such a
+    // request, so this asserts the database refuses it on its own.
+    const client = await signedInClient(BELLA.email, BELLA.password);
+
+    const { data: ownProduct } = await client
+      .from("products")
+      .select("id")
+      .limit(1)
+      .single();
+
+    const { data, error } = await client
+      .from("purchase_requests")
+      .insert({
+        restaurant_id: SAKURA.restaurantId,
+        product_id: ownProduct!.id,
+        quantity: 99,
+        priority: "urgent",
+      })
+      .select();
+
+    // Postgres rejects the write via the INSERT policy's WITH CHECK clause
+    expect(error).not.toBeNull();
+    expect(error!.code).toBe("42501");
+    expect(data).toBeNull();
+
+    await client.auth.signOut();
+  });
+
   it("Products counts differ between tenants (data is not shared)", async () => {
     const bellaClient = await signedInClient(BELLA.email, BELLA.password);
     const sakuraClient = await signedInClient(SAKURA.email, SAKURA.password);

@@ -48,7 +48,7 @@ export default function LoginPage() {
           <div style={{ fontSize: 32, marginBottom: 8 }}>🍽️</div>
           <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Restamenu Console</h1>
           <p style={{ color: "var(--muted)", fontSize: 13 }}>
-            Multi-tenant demo — RLS keeps each restaurant's data isolated
+            Multi-tenant demo — RLS keeps each restaurant&apos;s data isolated
           </p>
         </div>
 

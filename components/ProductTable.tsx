@@ -2,10 +2,9 @@ import type { Product } from "@/lib/types";
 
 interface Props {
   products: Product[];
-  role: string;
 }
 
-export default function ProductTable({ products, role }: Props) {
+export default function ProductTable({ products }: Props) {
   if (products.length === 0) {
     return <div className="empty">No products found for this restaurant.</div>;
   }

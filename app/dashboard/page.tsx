@@ -45,7 +45,7 @@ export default async function DashboardPage() {
       <div className="page-header">
         <h1 className="page-title">Products</h1>
         <span style={{ fontSize: 12, color: "var(--muted)" }}>
-          RLS: only your restaurant's rows are returned by Postgres
+          RLS: only your restaurant&apos;s rows are returned by Postgres
         </span>
       </div>
 
@@ -73,7 +73,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="card">
-        <ProductTable products={(products ?? []) as Product[]} role={membership.role} />
+        <ProductTable products={(products ?? []) as Product[]} />
       </div>
     </div>
   );

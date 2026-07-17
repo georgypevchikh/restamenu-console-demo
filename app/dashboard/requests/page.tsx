@@ -74,7 +74,7 @@ export default async function RequestsPage() {
       </div>
 
       <div className="card">
-        <RequestTable requests={(requests ?? []) as PurchaseRequest[]} role={membership.role} />
+        <RequestTable requests={(requests ?? []) as PurchaseRequest[]} />
       </div>
     </div>
   );

@@ -2,7 +2,6 @@ import type { PurchaseRequest } from "@/lib/types";
 
 interface Props {
   requests: PurchaseRequest[];
-  role: string;
 }
 
 const PRIORITY_BADGE: Record<string, string> = {
@@ -22,7 +21,7 @@ const STATUS_BADGE: Record<string, string> = {
   cancelled: "badge-cancelled",
 };
 
-export default function RequestTable({ requests, role }: Props) {
+export default function RequestTable({ requests }: Props) {
   if (requests.length === 0) {
     return <div className="empty">No purchase requests yet.</div>;
   }

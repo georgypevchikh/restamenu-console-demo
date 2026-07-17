@@ -8,13 +8,15 @@ on:
 
 jobs:
   ci:
-    name: Typecheck · Lint · Tenant isolation tests
+    name: Typecheck · Lint · Build · Tenant isolation tests
     runs-on: ubuntu-latest
 
+    # The tenant-isolation tests sign in as demo users and assert RLS holds, so
+    # they need the anon key and nothing more. A service_role key would bypass
+    # the very policies under test.
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
     steps:
       - uses: actions/checkout@v4
@@ -32,6 +34,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Build
+        run: npm run build
 
       - name: Tenant isolation tests
         run: npm test

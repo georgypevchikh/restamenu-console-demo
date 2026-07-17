@@ -122,6 +122,22 @@ describe("Tenant isolation — RLS", () => {
     await client.auth.signOut();
   });
 
+  it("Profiles are visible to teammates but not across tenants", async () => {
+    // profiles: teammate read (migration 013) widened profile visibility so the
+    // "Requested by" column can resolve names. It must not leak past the tenant.
+    const client = await signedInClient(BELLA.email, BELLA.password);
+
+    const { data, error } = await client.from("profiles").select("full_name, email");
+    expect(error).toBeNull();
+
+    const emails = (data ?? []).map((p) => p.email);
+    expect(emails).toContain("manager@bella-italia.demo"); // self
+    expect(emails).toContain("staff@bella-italia.demo"); // teammate
+    expect(emails.some((e) => e?.includes("sakura-house"))).toBe(false);
+
+    await client.auth.signOut();
+  });
+
   it("Products counts differ between tenants (data is not shared)", async () => {
     const bellaClient = await signedInClient(BELLA.email, BELLA.password);
     const sakuraClient = await signedInClient(SAKURA.email, SAKURA.password);

@@ -27,6 +27,7 @@ export default function RequestTable({ requests }: Props) {
   }
 
   return (
+    <div className="table-scroll">
     <table>
       <thead>
         <tr>
@@ -68,5 +69,6 @@ export default function RequestTable({ requests }: Props) {
         ))}
       </tbody>
     </table>
+    </div>
   );
 }

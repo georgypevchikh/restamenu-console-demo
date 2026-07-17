@@ -1,8 +1,18 @@
 "use client";
 
 import { useRef } from "react";
+import { useFormStatus } from "react-dom";
 import { createRequest } from "@/app/dashboard/requests/actions";
 import type { Product } from "@/lib/types";
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" className="btn-primary" disabled={pending}>
+      {pending ? "Adding…" : "Add request"}
+    </button>
+  );
+}
 
 export default function NewRequestForm({ products }: { products: Product[] }) {
   const ref = useRef<HTMLFormElement>(null);
@@ -13,30 +23,33 @@ export default function NewRequestForm({ products }: { products: Product[] }) {
   }
 
   return (
-    <form ref={ref} action={handleSubmit} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <label style={{ fontSize: 11, color: "var(--muted)" }}>Product</label>
-        <select name="product_id" required style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--fg)", fontSize: 13 }}>
+    <form ref={ref} action={handleSubmit} className="form-row">
+      <div className="field">
+        <label className="field-label" htmlFor="product_id">Product</label>
+        <select id="product_id" name="product_id" required>
           {products.map((p) => (
-            <option key={p.id} value={p.id}>{p.name} ({p.unit})</option>
+            <option key={p.id} value={p.id}>
+              {p.name} ({p.unit})
+            </option>
           ))}
         </select>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <label style={{ fontSize: 11, color: "var(--muted)" }}>Qty</label>
-        <input name="quantity" type="number" min={1} defaultValue={1} required style={{ width: 70, padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--fg)", fontSize: 13 }} />
+
+      <div className="field" style={{ maxWidth: 90 }}>
+        <label className="field-label" htmlFor="quantity">Qty</label>
+        <input id="quantity" name="quantity" type="number" min={1} defaultValue={1} required />
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <label style={{ fontSize: 11, color: "var(--muted)" }}>Priority</label>
-        <select name="priority" style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--fg)", fontSize: 13 }}>
-          <option value="urgent">🚨 urgent</option>
-          <option value="normal">normal</option>
-          <option value="whenever">whenever</option>
+
+      <div className="field">
+        <label className="field-label" htmlFor="priority">Priority</label>
+        <select id="priority" name="priority" defaultValue="urgent">
+          <option value="urgent">Urgent</option>
+          <option value="normal">Normal</option>
+          <option value="whenever">Whenever</option>
         </select>
       </div>
-      <button type="submit" className="btn-primary" style={{ padding: "6px 14px", fontSize: 13 }}>
-        + New request
-      </button>
+
+      <SubmitButton />
     </form>
   );
 }

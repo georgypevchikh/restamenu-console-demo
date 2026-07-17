@@ -26,8 +26,8 @@ export default function NavBar({ restaurantName, restaurantRegion, role, userEma
         <Link href="/dashboard/requests" className={pathname === "/dashboard/requests" ? "active" : ""}>
           Requests
         </Link>
-        <span style={{ color: "var(--border)" }}>|</span>
-        <span style={{ color: "var(--muted)", fontSize: 12 }}>{userEmail}</span>
+        <span className="nav-email" style={{ color: "var(--border)" }}>|</span>
+        <span className="nav-email" style={{ color: "var(--muted)", fontSize: 12 }}>{userEmail}</span>
         <form action="/api/auth/signout" method="POST" style={{ display: "contents" }}>
           <button type="submit" className="btn-ghost" style={{ padding: "4px 10px", fontSize: 12 }}>
             Sign out

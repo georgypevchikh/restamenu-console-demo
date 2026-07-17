@@ -10,6 +10,7 @@ export default function ProductTable({ products }: Props) {
   }
 
   return (
+    <div className="table-scroll">
     <table>
       <thead>
         <tr>
@@ -48,5 +49,6 @@ export default function ProductTable({ products }: Props) {
         })}
       </tbody>
     </table>
+    </div>
   );
 }

@@ -7,9 +7,16 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import * as dotenv from "dotenv";
 import * as path from "path";
+import WebSocket from "ws";
+
+// Node 20 has no native WebSocket — provide the ws package so Supabase Realtime works
+if (!globalThis.WebSocket) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).WebSocket = WebSocket;
+}
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 

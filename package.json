@@ -23,12 +23,16 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/ws": "^8.18.1",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^6.0.3",
     "dotenv": "^16.5.0",
     "eslint": "^9",
     "eslint-config-next": "^16.2.10",
     "typescript": "^5",
-    "vitest": "^2.1.9",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10",
     "ws": "^8.21.1"
+  },
+  "overrides": {
+    "postcss": "^8.5.19"
   }
 }

@@ -54,7 +54,7 @@ Suggested proof path:
 | Writes cannot cross the tenant boundary | A Bella Italia session attempts a Sakura House `INSERT`; Postgres rejects it with `42501`. |
 | Roles affect authorization, not just presentation | Manager/team membership is stored in `restaurant_members` and evaluated by database policies. |
 | Server rendering does not expose privileged credentials | Server Components fetch with the authenticated user's session; the application does not use `service_role`. |
-| Security behavior cannot silently regress | Typecheck, ESLint, production build and eighteen isolation tests run on every pull request and push to `main`, plus Deno checks and tests for the Edge Function layer. |
+| Security behavior cannot silently regress | Typecheck, ESLint, production build and 183 application tests run on every pull request and push to `main`, plus Deno checks and 26 Edge-runtime tests for the Edge Function layer. |
 | Urgent operations produce a real external action | An urgent purchase request triggers a database function, `pg_net`, n8n and a Telegram alert. |
 | Paid features are enforced by the database, not the UI | Stripe test-mode subscriptions arrive via signed, idempotent webhooks; a trigger grants/revokes the `billing_pro` entitlement, and RPCs re-check it in Postgres. |
 | Financial arithmetic is deterministic and reviewable | The tax engine works in integer minor units with versioned, effective-dated rule sets; every document stores an immutable calculation trace, and the same code passes the same tests under Node and Deno. |
@@ -77,7 +77,7 @@ Suggested proof path:
 
 - **Supabase Auth** for four demo identities.
 - **Postgres 17** as the source of truth.
-- **13 ordered SQL migrations** for schema, RLS, helper functions, automation and teammate-profile reads.
+- **28 ordered SQL migrations** for schema, RLS, helper functions, automation, billing, versioned tax rules, purchase orders, Xero sync, OTP and the transactional outbox.
 - **Row Level Security** across the tenant data model.
 - `SECURITY DEFINER` helpers for non-recursive membership checks.
 - **Supabase Vault** for the automation webhook secret.
@@ -260,15 +260,14 @@ The schema models restaurant membership, products, categories, suppliers, purcha
 
 ```text
 app/                         Next.js routes and Server Components
-├── api/auth/signout/        Server-side session termination
-├── dashboard/               Tenant-aware products view
-└── dashboard/requests/      Request UI and validated Server Action
+├── api/                     Sign-out + PO PDF route handlers
+├── dashboard/               Products, requests, orders, billing, audit, settings
 components/                  Responsive UI components
 lib/supabase/                Browser and server Supabase clients
-supabase/migrations/         Ordered schema, RLS and automation history
-supabase/seed.sql            Two coherent demo tenants
-tests/tenant-isolation.test.ts
-.github/workflows/ci.yml     Typecheck → lint → build → isolation tests
+supabase/migrations/         28 ordered migrations (schema → RLS → billing → tax → PO → Xero → OTP → outbox)
+supabase/functions/          9 Deno Edge Functions + runtime-agnostic _shared/core
+tests/                       Isolation, billing, Xero, tax, OTP, PDF, seed and contract tests
+.github/workflows/ci.yml     Typecheck → lint → build → app tests → Deno checks/tests
 ```
 
 ## Run locally

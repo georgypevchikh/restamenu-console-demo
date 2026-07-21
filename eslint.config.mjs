@@ -3,7 +3,9 @@ import typescript from "eslint-config-next/typescript";
 
 const config = [
   {
-    ignores: [".next/**", "node_modules/**", "next-env.d.ts", "*.tsbuildinfo"],
+    // supabase/functions is Deno land (Deno globals, npm: specifiers) —
+    // type-checked by `deno check` in CI, not by this toolchain.
+    ignores: [".next/**", "node_modules/**", "next-env.d.ts", "*.tsbuildinfo", "supabase/functions/**"],
   },
   ...coreWebVitals,
   ...typescript,

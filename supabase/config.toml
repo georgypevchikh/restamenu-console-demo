@@ -1,0 +1,37 @@
+# Per-function deploy configuration. The project is deployed with
+# `supabase functions deploy <name> --project-ref <ref> --use-api`
+# (API bundling — no Docker needed); this file carries the JWT settings.
+#
+# verify_jwt=false only where the caller cannot hold a JWT:
+#   - stripe-webhook: authenticated by the Stripe signature instead
+#   - xero-oauth-callback: a browser redirect from Xero, authenticated by the
+#     one-time state row created in xero-oauth-start
+
+project_id = "restamenu-console-demo"
+
+[functions.create-checkout-session]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.calculate-tax]
+verify_jwt = true
+
+[functions.xero-oauth-start]
+verify_jwt = true
+
+[functions.xero-oauth-callback]
+verify_jwt = false
+
+[functions.xero-sync]
+verify_jwt = true
+
+[functions.otp-request]
+verify_jwt = true
+
+[functions.otp-verify]
+verify_jwt = true
+
+[functions.generate-po-pdf]
+verify_jwt = true

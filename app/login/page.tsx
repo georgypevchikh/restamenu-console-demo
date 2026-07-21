@@ -4,15 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-const DEMO_ACCOUNTS = [
-  { label: "🍕 Bella Italia — Manager", email: "manager@bella-italia.demo", role: "Manager", restaurant: "Bella Italia" },
-  { label: "🍕 Bella Italia — Team", email: "staff@bella-italia.demo", role: "Team", restaurant: "Bella Italia" },
-  { label: "🍣 Sakura House — Manager", email: "manager@sakura-house.demo", role: "Manager", restaurant: "Sakura House" },
-  { label: "🍣 Sakura House — Team", email: "staff@sakura-house.demo", role: "Team", restaurant: "Sakura House" },
-];
-
-const DEMO_PASSWORD = "demo1234";
-
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -35,12 +26,6 @@ export default function LoginPage() {
     }
   }
 
-  function fillDemo(account: typeof DEMO_ACCOUNTS[0]) {
-    setEmail(account.email);
-    setPassword(DEMO_PASSWORD);
-    setError(null);
-  }
-
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
@@ -52,27 +37,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="card" style={{ marginBottom: 20 }}>
-          <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-            Demo accounts — click to fill
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            {DEMO_ACCOUNTS.map((acc) => (
-              <button
-                key={acc.email}
-                className="btn-ghost"
-                style={{ textAlign: "left", fontSize: 12, padding: "8px 10px" }}
-                onClick={() => fillDemo(acc)}
-              >
-                {acc.label}
-              </button>
-            ))}
-          </div>
-          <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 10 }}>
-            Password: <code style={{ background: "rgba(255,255,255,0.06)", padding: "1px 6px", borderRadius: 4 }}>{DEMO_PASSWORD}</code>
-          </p>
-        </div>
-
         <form onSubmit={handleLogin} className="card">
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: "block", fontSize: 12, color: "var(--muted)", marginBottom: 6 }}>Email</label>
@@ -80,7 +44,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="manager@bella-italia.demo"
+              placeholder="you@example.com"
               required
               autoComplete="email"
             />

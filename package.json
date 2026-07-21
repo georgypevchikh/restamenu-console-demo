@@ -9,7 +9,10 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:unit": "vitest run",
+    "test:live": "vitest run --config vitest.live.config.ts",
+    "test:watch": "vitest",
+    "verify": "npm run typecheck && npm run lint && npm run test:unit && npm run build"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

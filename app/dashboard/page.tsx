@@ -1,43 +1,36 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { assertQuerySucceeded } from "@/lib/supabase/query";
+import { requireRestaurantContext } from "@/lib/current-restaurant";
 import ProductTable from "@/components/ProductTable";
 import type { Product } from "@/lib/types";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, active } = await requireRestaurantContext();
 
-  const { data: membership } = await supabase
-    .from("restaurant_members")
-    .select("role, restaurant_id")
-    .eq("user_id", user.id)
-    .single();
-
-  if (!membership) redirect("/login");
-
-  const { data: products } = await supabase
+  const { data: products, error: productsError } = await supabase
     .from("products")
     .select("*, categories(name, icon)")
-    .eq("restaurant_id", membership.restaurant_id)
+    .eq("restaurant_id", active.id)
     .eq("is_active", true)
     .order("name");
+  assertQuerySucceeded(productsError, "load products");
 
-  const { data: pendingRequests } = await supabase
+  const { data: pendingRequests, error: pendingRequestsError } = await supabase
     .from("purchase_requests")
     .select("id")
-    .eq("restaurant_id", membership.restaurant_id)
+    .eq("restaurant_id", active.id)
     .eq("status", "pending");
+  assertQuerySucceeded(pendingRequestsError, "load pending requests");
 
-  const { data: urgentRequests } = await supabase
+  const { data: urgentRequests, error: urgentRequestsError } = await supabase
     .from("purchase_requests")
     .select("id")
-    .eq("restaurant_id", membership.restaurant_id)
+    .eq("restaurant_id", active.id)
     .eq("priority", "urgent")
     .eq("status", "pending");
+  assertQuerySucceeded(urgentRequestsError, "load urgent requests");
 
   const lowStock = (products ?? []).filter(
-    (p) => p.current_stock !== null && p.current_stock <= p.min_quantity
+    (p) => p.current_stock !== null && p.current_stock <= p.min_quantity,
   );
 
   return (
@@ -56,7 +49,12 @@ export default async function DashboardPage() {
         </div>
         <div className="stat-card">
           <div className="stat-label">Low stock</div>
-          <div className="stat-value" style={{ color: lowStock.length > 0 ? "var(--warning)" : undefined }}>
+          <div
+            className="stat-value"
+            style={{
+              color: lowStock.length > 0 ? "var(--warning)" : undefined,
+            }}
+          >
             {lowStock.length}
           </div>
         </div>
@@ -66,7 +64,13 @@ export default async function DashboardPage() {
         </div>
         <div className="stat-card">
           <div className="stat-label">Urgent</div>
-          <div className="stat-value" style={{ color: (urgentRequests?.length ?? 0) > 0 ? "var(--danger)" : undefined }}>
+          <div
+            className="stat-value"
+            style={{
+              color:
+                (urgentRequests?.length ?? 0) > 0 ? "var(--danger)" : undefined,
+            }}
+          >
             {urgentRequests?.length ?? 0}
           </div>
         </div>

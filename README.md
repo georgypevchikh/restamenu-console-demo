@@ -4,12 +4,14 @@
 
 ### A public, executable proof of multi-tenant restaurant operations
 
-**Tenant isolation in Postgres · role-aware workflows · urgent-request automation · CI-backed security tests**
+**Tenant isolation in Postgres · Stripe-enforced entitlements · tested tax engine in Edge Functions · Xero sync · OTP-gated approvals · transactional outbox · CI-backed security tests**
 
 [![Live Demo](https://img.shields.io/badge/Live_demo-Open-635BFF?style=for-the-badge)](https://restamenu-console-demo.vercel.app)
 [![CI](https://img.shields.io/github/actions/workflow/status/georgypevchikh/restamenu-console-demo/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/georgypevchikh/restamenu-console-demo/actions/workflows/ci.yml)
 [![Next.js](https://img.shields.io/badge/Next.js_16-111111?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-RLS_+_Auth-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-RLS_+_Edge_Functions-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Stripe](https://img.shields.io/badge/Stripe-test_mode-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://stripe.com/)
+[![Deno](https://img.shields.io/badge/Deno-Edge_runtime-111111?style=for-the-badge&logo=deno)](https://deno.com/)
 
 **Designed and built independently by [Georgy Pevchikh](https://github.com/georgypevchikh).**
 
@@ -21,22 +23,20 @@
 
 Restamenu is an inventory and purchasing product for restaurant teams. The main mobile application is private and in active development, so this repository turns its most important engineering properties into public, inspectable proof.
 
-This is not a static portfolio mockup. It is a deployed application with two live tenants, four role-based demo users, database-enforced isolation, real Postgres migrations, integration tests, and an event-driven Telegram automation.
+This is not a static portfolio mockup. It is a deployed application with two live tenants, role-based users, database-enforced isolation, real Postgres migrations, integration tests, and an event-driven Telegram automation.
 
 > **The central design decision:** tenant isolation lives in the database, not in a client-side filter. If application code supplies the wrong `restaurant_id`, Postgres returns zero rows or rejects the write.
 
-## Try it in two clicks
+## Review the live application
 
-Open **[restamenu-console-demo.vercel.app](https://restamenu-console-demo.vercel.app)** and select any demo identity. The login screen fills its credentials automatically.
+Open **[restamenu-console-demo.vercel.app](https://restamenu-console-demo.vercel.app)** and sign in with reviewer credentials supplied privately by the project owner.
 
 | Tenant | Manager | Team member |
 |---|---|---|
 | 🍕 Bella Italia | `manager@bella-italia.demo` | `staff@bella-italia.demo` |
 | 🍣 Sakura House | `manager@sakura-house.demo` | `staff@sakura-house.demo` |
 
-Password for every account: `demo1234`
-
-![One-click demo identities](docs/images/demo-login.png)
+Shared passwords are deliberately not published or embedded in the client bundle: public reusable credentials can be changed or taken over through an authentication API even when database RLS is correct.
 
 Suggested proof path:
 
@@ -54,8 +54,12 @@ Suggested proof path:
 | Writes cannot cross the tenant boundary | A Bella Italia session attempts a Sakura House `INSERT`; Postgres rejects it with `42501`. |
 | Roles affect authorization, not just presentation | Manager/team membership is stored in `restaurant_members` and evaluated by database policies. |
 | Server rendering does not expose privileged credentials | Server Components fetch with the authenticated user's session; the application does not use `service_role`. |
-| Security behavior cannot silently regress | Typecheck, ESLint, production build and seven isolation tests run on every pull request and push to `main`. |
+| Security behavior cannot silently regress | Typecheck, ESLint, production build and eighteen isolation tests run on every pull request and push to `main`, plus Deno checks and tests for the Edge Function layer. |
 | Urgent operations produce a real external action | An urgent purchase request triggers a database function, `pg_net`, n8n and a Telegram alert. |
+| Paid features are enforced by the database, not the UI | Stripe test-mode subscriptions arrive via signed, idempotent webhooks; a trigger grants/revokes the `billing_pro` entitlement, and RPCs re-check it in Postgres. |
+| Financial arithmetic is deterministic and reviewable | The tax engine works in integer minor units with versioned, effective-dated rule sets; every document stores an immutable calculation trace, and the same code passes the same tests under Node and Deno. |
+| High-stakes actions demand a second factor | Purchase-order approval requires an SMS/WhatsApp OTP: hash-only storage, cooldowns, per-phone/per-IP caps and a single-use challenge consumed transactionally. |
+| External side effects survive failures | Domain events go through a Postgres transactional outbox — pg_cron sweeps, `pg_net` delivery, response reconciliation and exponential backoff, all visible in the audit UI. |
 
 ## Architecture
 
@@ -142,6 +146,83 @@ The final design moved filtering and enrichment into the Postgres trigger functi
 
 See [`011_urgent_request_webhook.sql`](supabase/migrations/011_urgent_request_webhook.sql).
 
+## Billing & Supplier Sync
+
+The console's second layer: subscription billing, priced purchase orders,
+accounting sync and delivery guarantees — built on the same principle as the
+tenant model. **The web deployment still holds only the anon key.** Every
+privileged operation is one of nine Supabase Edge Functions with its own
+scoped secrets; functions acting for a user forward the caller's JWT so RLS
+keeps deciding what a tenant can see.
+
+```mermaid
+flowchart LR
+  subgraph Vercel ["Next.js (anon key only)"]
+    UI[Console]
+  end
+  subgraph Edge ["9 Edge Functions (Deno)"]
+    SW[stripe-webhook]
+    TX[calculate-tax]
+    XS[xero-sync]
+    OTP[otp-request / verify]
+    PDF[generate-po-pdf]
+  end
+  subgraph PG ["Postgres · RLS · pg_cron · pg_net"]
+    ENT[(entitlements)]
+    PO[(purchase_orders)]
+    OB[(outbox_events)]
+    AU[(audit_events)]
+  end
+  Stripe -->|signed webhook| SW --> ENT
+  UI --> TX & OTP & PDF & XS
+  XS <--> Xero[Xero demo company]
+  OTP --> Twilio[Twilio SMS / WhatsApp]
+  PG -->|outbox sweep| N8N[n8n → Telegram]
+```
+
+**The flow a reviewer can walk end-to-end:**
+
+1. **Subscribe** — the free tenant upgrades through Stripe test-mode Checkout
+   (card `4242 4242 4242 4242`). The signed webhook is verified and recorded
+   in an idempotency ledger; out-of-order events are detected and skipped; a
+   trigger grants the `billing_pro` entitlement in the same transaction.
+2. **Price** — pending purchase requests become a purchase order. The
+   `calculate-tax` Edge Function selects the rule-set version effective today
+   (standard/reduced VAT by category, withholding above a threshold,
+   half-up or banker's rounding — in integer cents, never floats) and returns
+   a full trace, persisted immutably next to the document.
+3. **Approve** — approval is OTP-gated: a 6-digit code via a
+   provider-agnostic adapter (Twilio SMS, Twilio WhatsApp sandbox, or a
+   console fallback), stored only as a salted HMAC, with cooldowns and
+   per-phone/per-IP rate limits enforced in SQL. The verified challenge is
+   consumed inside the approval transaction — it can never approve twice.
+4. **Document** — the approved PO renders as a PDF from the persisted trace.
+5. **Sync** — the PO is pushed to a Xero demo company as a draft bill via
+   OAuth 2.0; all bill pages import back into a timestamp-fenced mirror table,
+   where records absent from a complete later snapshot are marked stale rather
+   than silently retained as current. Tokens are encrypted at
+   rest with a Vault key; refresh-token rotation is compare-and-swap so
+   concurrent refreshes cannot clobber each other. Suppliers map to durable
+   Xero ContactIDs (with deterministic external ContactNumbers for new
+   contacts), and retries reconcile a tenant-qualified PO Reference
+   before using a fresh, short-lived request idempotency key. Ambiguous
+   duplicate contacts/bills or a remote/local total mismatch stop instead of
+   guessing. Explicit tax/withholding adjustment lines preserve the PO payable
+   total without claiming jurisdiction-specific Xero tax-account mapping.
+   Every push, pull and refresh lands in a sync journal.
+6. **Deliver** — domain events (approval, subscription changes, Xero pushes)
+   go through a transactional outbox: pg_cron sweeps post them to n8n via
+   `pg_net`, a reconciliation pass matches the async responses, and failures
+   retry with exponential backoff — all watchable on the Audit page.
+
+**Honest scope:** everything runs against sandboxes — Stripe test mode, the
+Xero demo company, Twilio's sandbox. This demonstrates the engineering
+(signature verification, idempotency, ordering, encryption, rate limiting,
+delivery guarantees), not commercial production billing history.
+
+Design details: [`docs/billing-extension-plan.md`](docs/billing-extension-plan.md) ·
+setup: [`docs/SETUP.md`](docs/SETUP.md)
+
 ## Data model
 
 The schema models restaurant membership, products, categories, suppliers, purchase requests, completed purchases and notifications. Tenant-owned tables carry `restaurant_id`, creating one consistent authorization boundary.
@@ -150,7 +231,7 @@ The schema models restaurant membership, products, categories, suppliers, purcha
 
 ## Product behavior
 
-- Four one-click demo identities across two restaurants and two roles.
+- Four reviewer identities across two restaurants and two roles; credentials are distributed privately.
 - Product inventory with category, unit, minimum quantity and current stock.
 - Purchase requests with quantity, priority, status and requester identity.
 - Summary cards for total, pending, urgent and bought requests.

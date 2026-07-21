@@ -6,37 +6,110 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 20.19.5
+  DENO_VERSION: 2.9.3
+  SUPABASE_CLI_VERSION: 2.98.2
+
 jobs:
-  ci:
-    name: Typecheck · Lint · Build · Tenant isolation tests
+  application:
+    name: Application · typecheck, lint, unit tests, build
     runs-on: ubuntu-latest
-
-    # The tenant-isolation tests sign in as demo users and assert RLS holds, so
-    # they need the anon key and nothing more. A service_role key would bypass
-    # the very policies under test.
+    timeout-minutes: 15
     env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-
+      # Build-time placeholders only. This job never contacts Supabase.
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
 
-      - uses: actions/setup-node@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Install dependencies
+      - name: Install locked dependencies
         run: npm ci
 
-      - name: Typecheck
-        run: npm run typecheck
+      - name: Verify application
+        run: npm run verify
 
-      - name: Lint
-        run: npm run lint
+  edge-functions:
+    name: Edge Functions · format, lint, check, Deno tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
 
-      - name: Build
-        run: npm run build
+      - name: Set up Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
 
-      - name: Tenant isolation tests
-        run: npm test
+      - name: Check formatting
+        run: deno fmt --check supabase/functions
+
+      - name: Lint Edge Functions
+        run: deno lint supabase/functions
+
+      - name: Type-check every function entrypoint
+        run: deno check --node-modules-dir=auto supabase/functions/*/index.ts
+
+      - name: Run Deno runtime tests
+        run: deno test --node-modules-dir=auto --allow-env supabase/functions/tests
+
+  local-database:
+    name: Supabase · migrations and RLS integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Start local Supabase and replay every migration
+        run: |
+          supabase start
+          supabase db reset --local
+
+      - name: Seed deterministic local tenants
+        run: |
+          eval "$(supabase status -o env)"
+          TEST_DEMO_PASSWORD="$(openssl rand -hex 24)"
+          NEXT_PUBLIC_SUPABASE_URL="$API_URL" \
+          SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+          TEST_DEMO_PASSWORD="$TEST_DEMO_PASSWORD" \
+          node scripts/seed-local-test-data.mjs
+          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          echo "TEST_DEMO_PASSWORD=$TEST_DEMO_PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Run RLS and privilege integration tests
+        run: npm run test:live
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup

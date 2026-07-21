@@ -1,0 +1,119 @@
+{
+  "name": "Restamenu Outbox Delivery",
+  "_comment": "Reference export. Delivers transactional-outbox events to Telegram. Import, then: (1) create a Header Auth credential on the Webhook node with header name 'Authorization' and a random secret value; (2) set the Telegram credential + chat id; (3) activate and store the production URL/auth secret in Supabase Vault. The two Code nodes keep a bounded delivered-event ledger in n8n workflow static data. A retry after Telegram succeeded therefore returns 200 without sending a duplicate. Static data is persisted only for active production executions, so activate the workflow before verification.",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "restamenu-outbox",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "name": "Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nif (!body || typeof body.eventId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.eventId) || typeof body.eventType !== 'string') {\n  throw new Error('Invalid outbox envelope');\n}\nconst delivered = $getWorkflowStaticData('global');\nreturn [{ json: { body, route: delivered['outbox:' + body.eventId] ? 'duplicate' : 'send' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "name": "Check Delivery Ledger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "is-duplicate",
+              "leftValue": "={{ $json.route }}",
+              "rightValue": "duplicate",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [440, 0],
+      "name": "Already Delivered?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ eventId: $json.body.eventId, ok: true, duplicate: true }) }}"
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [680, -120],
+      "name": "Respond Duplicate"
+    },
+    {
+      "parameters": {
+        "chatId": "<TELEGRAM_CHAT_ID>",
+        "text": "={{ (function(b){ const p = b.payload || {}; const text = function(v, fallback){ return String(v == null ? fallback : v).slice(0, 1000); }; if (b.eventType === 'po.approved') { return '📦 PO approved\\n\\n' + text(p.poNumber, 'Unknown PO') + ' — ' + text(p.supplier, 'Unknown supplier') + '\\nTotal: ' + (Number(p.totalMinor || 0)/100).toFixed(2) + ' ' + text(p.currency, 'EUR') + '\\nApproved by: ' + text(p.approvedBy, 'Unknown'); } if (b.eventType === 'subscription.status_changed') { return '💳 Subscription ' + text(p.status, 'changed') + '\\n\\nEntitlement: ' + (p.entitlementActive ? 'active ✅' : 'revoked ❌') + '\\n' + text(p.stripeSubscriptionId, 'Unknown subscription'); } if (b.eventType === 'xero.invoice_pushed') { return '📤 Pushed to Xero\\n\\n' + text(p.poNumber, 'Unknown PO') + ' → draft bill\\n' + text(p.xeroInvoiceId, 'Unknown invoice'); } return '🔔 ' + text(b.eventType, 'outbox event') + '\\n\\n' + text(JSON.stringify(p), '{}'); })($json.body) }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [680, 100],
+      "name": "Telegram"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('Check Delivery Ledger').first().json.body;\nconst delivered = $getWorkflowStaticData('global');\nconst key = 'outbox:' + body.eventId;\ndelivered[key] = { deliveredAt: new Date().toISOString() };\nconst keys = Object.keys(delivered).filter((candidate) => candidate.startsWith('outbox:'));\nif (keys.length > 10000) {\n  keys.sort((a, b) => String(delivered[a]?.deliveredAt || '').localeCompare(String(delivered[b]?.deliveredAt || '')));\n  for (const staleKey of keys.slice(0, keys.length - 10000)) delete delivered[staleKey];\n}\nreturn [{ json: { body } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 100],
+      "name": "Mark Delivered"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ eventId: $json.body.eventId, ok: true, duplicate: false }) }}"
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1120, 100],
+      "name": "Respond OK"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Check Delivery Ledger", "type": "main", "index": 0 }]]
+    },
+    "Check Delivery Ledger": {
+      "main": [[{ "node": "Already Delivered?", "type": "main", "index": 0 }]]
+    },
+    "Already Delivered?": {
+      "main": [
+        [{ "node": "Respond Duplicate", "type": "main", "index": 0 }],
+        [{ "node": "Telegram", "type": "main", "index": 0 }]
+      ]
+    },
+    "Telegram": {
+      "main": [[{ "node": "Mark Delivered", "type": "main", "index": 0 }]]
+    },
+    "Mark Delivered": {
+      "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

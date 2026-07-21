@@ -50,7 +50,7 @@ describe("buildAuthorizeUrl", () => {
     expect(url.searchParams.get("client_id")).toBe("CLIENT");
     expect(url.searchParams.get("state")).toBe("abc-123");
     expect(url.searchParams.get("scope")).toContain("offline_access");
-    expect(url.searchParams.get("scope")).toContain("accounting.transactions");
+    expect(url.searchParams.get("scope")).toContain("accounting.invoices");
   });
 });
 

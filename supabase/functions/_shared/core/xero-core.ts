@@ -19,8 +19,11 @@ export const XERO_CONNECTIONS_URL = "https://api.xero.com/connections";
 export const XERO_INVOICES_URL = "https://api.xero.com/api.xro/2.0/Invoices";
 export const XERO_CONTACTS_URL = "https://api.xero.com/api.xro/2.0/Contacts";
 
+// Xero replaced the broad `accounting.transactions` scope with granular scopes
+// for apps created after 2 March 2026. `accounting.invoices` covers the ACCPAY
+// bill push/import; `accounting.contacts` covers supplier contact resolution.
 export const XERO_SCOPES =
-  "offline_access openid profile email accounting.transactions accounting.contacts";
+  "offline_access openid profile email accounting.invoices accounting.contacts";
 
 const DEFAULT_APP_REDIRECT = "/dashboard/settings/xero";
 const XERO_GUID =
@@ -89,10 +92,13 @@ export function buildAuthorizeUrl(params: {
     response_type: "code",
     client_id: params.clientId,
     redirect_uri: params.redirectUri,
-    scope: params.scopes ?? XERO_SCOPES,
     state: params.state,
   });
-  return `${XERO_AUTHORIZE_URL}?${q.toString()}`;
+  // Xero's identity server rejects '+'-encoded spaces in `scope` with
+  // invalid_scope; it requires %20. URLSearchParams encodes spaces as '+', so
+  // append scope separately with encodeURIComponent (which emits %20).
+  const scope = params.scopes ?? XERO_SCOPES;
+  return `${XERO_AUTHORIZE_URL}?${q.toString()}&scope=${encodeURIComponent(scope)}`;
 }
 
 export interface XeroTokens {

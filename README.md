@@ -61,6 +61,68 @@ Suggested proof path:
 | High-stakes actions demand a second factor | Purchase-order approval requires an SMS/WhatsApp OTP: hash-only storage, cooldowns, per-phone/per-IP caps and a single-use challenge consumed transactionally. |
 | External side effects survive failures | Domain events go through a Postgres transactional outbox — pg_cron sweeps, `pg_net` delivery, response reconciliation and exponential backoff, all visible in the audit UI. |
 
+## See it running
+
+Each claim above corresponds to a screen or an external system you can reach. These captures come from the deployed demo running against **sandbox/test** environments — Stripe **test mode**, a Xero **demo company** and the Twilio **WhatsApp sandbox**. No real payments, customers or commercial records are involved; this is a deployed demo, not a production billing operator.
+
+### Subscription billing enforced by the database
+
+A signed, idempotent Stripe webhook mirrors the subscription into Postgres, and a database trigger grants the `billing_pro` entitlement in the same transaction. Access is re-checked in the database, not just the UI.
+
+<p align="center">
+  <img src="docs/images/proof-billing-entitlement.jpg" alt="Billing page: Pro plan active, Pro features unlocked, entitlement enforced in Postgres" width="900" />
+</p>
+
+The payment itself, in Stripe test mode:
+
+<p align="center">
+  <img src="docs/images/proof-stripe-sandbox.jpg" alt="Stripe sandbox dashboard showing the subscription payment" width="900" />
+</p>
+
+### Purchase orders: tax engine → OTP approval → Xero → PDF
+
+Orders are priced by the versioned tax engine, approved with an OTP, and synced to Xero.
+
+<p align="center">
+  <img src="docs/images/proof-purchase-orders.png" alt="Purchase orders priced by the tax engine, approved with OTP, synced to Xero" width="900" />
+</p>
+
+Approval requires a one-time code delivered over WhatsApp before the order can move forward:
+
+<p align="center">
+  <img src="docs/images/proof-otp-approval.png" alt="Purchase order approval gated by a WhatsApp OTP" width="720" />
+</p>
+
+<p align="center">
+  <img src="docs/images/proof-twilio-whatsapp.png" alt="Twilio console showing WhatsApp OTP messages delivered" width="900" />
+</p>
+
+An approved order pushes to Xero as a draft ACCPAY bill, with the tax computed by Restamenu's own authoritative engine — and generates a purchase-order PDF ([sample document](docs/PO-2026-0002-sample.pdf)).
+
+<p align="center">
+  <img src="docs/images/proof-xero-draft-bill.png" alt="Draft bill in a Xero demo company created from an approved purchase order" width="900" />
+</p>
+
+### Transactional outbox → n8n → Telegram
+
+Domain events are delivered through the outbox with idempotency and retry. Successful executions in n8n, and the resulting Telegram notifications:
+
+<p align="center">
+  <img src="docs/images/proof-n8n-outbox-runs.png" alt="n8n execution list for the Restamenu outbox delivery workflow" width="900" />
+</p>
+
+<p align="center">
+  <img src="docs/images/proof-telegram-po-approved.png" alt="Telegram notifications for approved purchase orders and the Xero push" width="520" />
+</p>
+
+### The schema behind it
+
+All of the above lives in one multi-tenant Postgres database, under Row-Level Security:
+
+<p align="center">
+  <img src="docs/images/database-schema-billing.png" alt="Production database schema: purchase orders, tax calculations, tax rule sets, Stripe events and more" width="900" />
+</p>
+
 ## Architecture
 
 ![Multi-tenant architecture](docs/images/architecture.svg)

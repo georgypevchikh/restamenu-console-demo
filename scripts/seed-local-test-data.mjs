@@ -238,6 +238,17 @@ ensure(
       status: "pending",
     },
     {
+      // Manager-authored request so the full Bella queue (manager view) is
+      // strictly larger than a team member's own-rows-only view.
+      id: "11111111-4000-4000-8000-000000000002",
+      restaurant_id: RESTAURANTS.bella,
+      product_id: PRODUCTS.bellaMilk,
+      created_by: users.bellaManager,
+      quantity: 2,
+      priority: "normal",
+      status: "pending",
+    },
+    {
       id: "22222222-4000-4000-8000-000000000001",
       restaurant_id: RESTAURANTS.sakura,
       product_id: PRODUCTS.sakuraRice,

@@ -47,24 +47,26 @@ export interface StripeEventLike {
 
 export type ReducerDecision =
   | {
-      kind: "upsert_subscription";
-      stripeSubscriptionId: string;
-      restaurantId: string | null; // null → resolve via billing_customers by customerId
-      customerId: string | null;
-      status: SubscriptionStatus;
-      priceId: string | null;
-      currentPeriodEnd: string | null; // ISO
-      cancelAtPeriodEnd: boolean;
-      eventCreated: number;
-    }
+    kind: "upsert_subscription";
+    stripeSubscriptionId: string;
+    restaurantId: string | null; // null → resolve via billing_customers by customerId
+    customerId: string | null;
+    status: SubscriptionStatus;
+    priceId: string | null;
+    currentPeriodEnd: string | null; // ISO
+    cancelAtPeriodEnd: boolean;
+    eventCreated: number;
+  }
   | {
-      kind: "link_customer";
-      customerId: string;
-      restaurantId: string;
-    }
+    kind: "link_customer";
+    customerId: string;
+    restaurantId: string;
+  }
   | { kind: "skip"; reason: string };
 
-function customerId(c: string | { id: string } | undefined | null): string | null {
+function customerId(
+  c: string | { id: string } | undefined | null,
+): string | null {
   if (!c) return null;
   return typeof c === "string" ? c : c.id;
 }
@@ -76,7 +78,10 @@ export function reduceStripeEvent(event: StripeEventLike): ReducerDecision {
     const cust = customerId(obj.customer);
     const restaurantId = obj.metadata?.restaurant_id ?? null;
     if (!cust || !restaurantId) {
-      return { kind: "skip", reason: "checkout session without customer or restaurant_id metadata" };
+      return {
+        kind: "skip",
+        reason: "checkout session without customer or restaurant_id metadata",
+      };
     }
     return { kind: "link_customer", customerId: cust, restaurantId };
   }
@@ -86,13 +91,23 @@ export function reduceStripeEvent(event: StripeEventLike): ReducerDecision {
     event.type === "customer.subscription.updated" ||
     event.type === "customer.subscription.deleted"
   ) {
-    if (!obj.id) return { kind: "skip", reason: "subscription event without id" };
+    if (!obj.id) {
+      return { kind: "skip", reason: "subscription event without id" };
+    }
 
     // A deleted subscription reports its last live status; the mirror should
     // say canceled regardless.
-    const rawStatus = event.type === "customer.subscription.deleted" ? "canceled" : obj.status;
-    if (!rawStatus || !(SUBSCRIPTION_STATUSES as readonly string[]).includes(rawStatus)) {
-      return { kind: "skip", reason: `unknown subscription status: ${rawStatus}` };
+    const rawStatus = event.type === "customer.subscription.deleted"
+      ? "canceled"
+      : obj.status;
+    if (
+      !rawStatus ||
+      !(SUBSCRIPTION_STATUSES as readonly string[]).includes(rawStatus)
+    ) {
+      return {
+        kind: "skip",
+        reason: `unknown subscription status: ${rawStatus}`,
+      };
     }
 
     return {
@@ -114,6 +129,9 @@ export function reduceStripeEvent(event: StripeEventLike): ReducerDecision {
 }
 
 /** Stale-event guard: apply only if this event is not older than the last applied one. */
-export function isStale(eventCreated: number, lastEventCreated: number): boolean {
+export function isStale(
+  eventCreated: number,
+  lastEventCreated: number,
+): boolean {
   return eventCreated < lastEventCreated;
 }

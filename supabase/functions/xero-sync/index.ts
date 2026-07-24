@@ -1490,8 +1490,7 @@ Deno.serve(async (req) => {
       }
 
       if (!completeSnapshot) {
-        const reason =
-          `bill import exceeded the ${maxBills}-row safety limit`;
+        const reason = `bill import exceeded the ${maxBills}-row safety limit`;
         const { error: logError } = await db.from("xero_sync_log").insert({
           restaurant_id: caller.restaurantId,
           operation: "bill_import",

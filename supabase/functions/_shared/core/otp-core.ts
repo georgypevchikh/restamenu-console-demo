@@ -36,9 +36,13 @@ export async function hashOtpCode(code: string, salt: string): Promise<string> {
     new TextEncoder().encode(salt),
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign"]
+    ["sign"],
   );
-  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(code));
+  const sig = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(code),
+  );
   return bytesToHex(new Uint8Array(sig));
 }
 
@@ -55,7 +59,7 @@ export function timingSafeEqualHex(a: string, b: string): boolean {
 export async function verifyOtpCode(
   code: string,
   salt: string,
-  expectedHash: string
+  expectedHash: string,
 ): Promise<boolean> {
   if (!/^\d{6}$/.test(code)) return false;
   const actual = await hashOtpCode(code, salt);

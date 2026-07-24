@@ -23,27 +23,32 @@ const payload = JSON.stringify({
   object: "event",
   type: "customer.subscription.updated",
   created: 1_800_000_000,
-  data: { object: { id: "sub_test", object: "subscription", status: "active" } },
+  data: {
+    object: { id: "sub_test", object: "subscription", status: "active" },
+  },
 });
 
 async function signPayload(
   body: string,
   secret: string,
-  timestamp = Math.floor(Date.now() / 1000)
+  timestamp = Math.floor(Date.now() / 1000),
 ): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign"]
+    ["sign"],
   );
   const sig = await crypto.subtle.sign(
     "HMAC",
     key,
-    new TextEncoder().encode(`${timestamp}.${body}`)
+    new TextEncoder().encode(`${timestamp}.${body}`),
   );
-  const hex = Array.from(new Uint8Array(sig), (b) => b.toString(16).padStart(2, "0")).join("");
+  const hex = Array.from(
+    new Uint8Array(sig),
+    (b) => b.toString(16).padStart(2, "0"),
+  ).join("");
   return `t=${timestamp},v1=${hex}`;
 }
 
@@ -54,7 +59,7 @@ Deno.test("a correctly signed payload verifies", async () => {
     header,
     SECRET,
     undefined,
-    cryptoProvider
+    cryptoProvider,
   );
   assertEquals(event.id, "evt_test_1");
   assertEquals(event.type, "customer.subscription.updated");
@@ -64,20 +69,42 @@ Deno.test("a tampered payload is rejected", async () => {
   const header = await signPayload(payload, SECRET);
   const tampered = payload.replace('"active"', '"canceled"');
   await assertRejects(() =>
-    stripe.webhooks.constructEventAsync(tampered, header, SECRET, undefined, cryptoProvider)
+    stripe.webhooks.constructEventAsync(
+      tampered,
+      header,
+      SECRET,
+      undefined,
+      cryptoProvider,
+    )
   );
 });
 
 Deno.test("a signature from the wrong secret is rejected", async () => {
   const header = await signPayload(payload, "whsec_some_other_secret");
   await assertRejects(() =>
-    stripe.webhooks.constructEventAsync(payload, header, SECRET, undefined, cryptoProvider)
+    stripe.webhooks.constructEventAsync(
+      payload,
+      header,
+      SECRET,
+      undefined,
+      cryptoProvider,
+    )
   );
 });
 
 Deno.test("an expired timestamp is rejected (replay window)", async () => {
-  const header = await signPayload(payload, SECRET, Math.floor(Date.now() / 1000) - 600);
+  const header = await signPayload(
+    payload,
+    SECRET,
+    Math.floor(Date.now() / 1000) - 600,
+  );
   await assertRejects(() =>
-    stripe.webhooks.constructEventAsync(payload, header, SECRET, undefined, cryptoProvider)
+    stripe.webhooks.constructEventAsync(
+      payload,
+      header,
+      SECRET,
+      undefined,
+      cryptoProvider,
+    )
   );
 });

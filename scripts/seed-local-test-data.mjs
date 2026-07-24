@@ -1,4 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
+import WebSocket from "ws";
+
+// supabase-js instantiates a Realtime client that resolves a WebSocket
+// implementation eagerly. Node 20 has no global WebSocket (native only from
+// Node 21+), so on the CI runtime that resolution throws before any seeding
+// runs. This script never uses Realtime, but the client still needs a WS
+// constructor present — provide one. Harmless where a native global exists.
+if (typeof globalThis.WebSocket === "undefined") {
+  globalThis.WebSocket = WebSocket;
+}
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

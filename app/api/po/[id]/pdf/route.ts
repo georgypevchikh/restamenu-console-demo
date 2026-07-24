@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getRestaurantContext } from "@/lib/current-restaurant";
+import { edgeFunctionUrl } from "@/lib/edge";
 
 /**
  * Browser-facing PDF download. Proxies to the generate-po-pdf Edge Function
@@ -34,7 +35,7 @@ export async function GET(
   }
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-po-pdf`,
+    edgeFunctionUrl("generate-po-pdf"),
     {
       method: "POST",
       headers: {

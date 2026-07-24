@@ -1,5 +1,27 @@
 import { getRestaurantContext } from "@/lib/current-restaurant";
 
+/** Edge Function names are internal identifiers: lowercase, digits, dashes. */
+const EDGE_FUNCTION_NAME = /^[a-z0-9-]+$/;
+
+/**
+ * Build the absolute URL for a Supabase Edge Function.
+ *
+ * The name is validated against a strict allowlist pattern so it can never
+ * carry a scheme, host, or path traversal, and the URL is assembled with the
+ * WHATWG `URL` constructor — the host is fixed by `base`, and a rooted path
+ * can never override it. This makes the request target provably constant.
+ */
+export function edgeFunctionUrl(name: string): string {
+  if (!EDGE_FUNCTION_NAME.test(name)) {
+    throw new Error(`invalid edge function name: ${name}`);
+  }
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL is not configured");
+  }
+  return new URL(`/functions/v1/${name}`, base).toString();
+}
+
 /**
  * Server-side bridge to Supabase Edge Functions. The caller's own access
  * token rides along, so functions resolve the user through RLS exactly as
@@ -36,7 +58,7 @@ export async function invokeEdge(
   }
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/${name}`,
+    edgeFunctionUrl(name),
     {
       method: "POST",
       headers: {

@@ -1,5 +1,11 @@
 {
   "lock": false,
+  "comment": "no-import-prefix is excluded: inline npm:/jsr: specifiers are the supported Supabase Edge Functions pattern, and deno check/test confirm they resolve correctly.",
+  "lint": {
+    "rules": {
+      "exclude": ["no-import-prefix"]
+    }
+  },
   "test": {
     "include": ["tests/"]
   }

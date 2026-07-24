@@ -21,11 +21,11 @@ const event: StripeEventLike = {
 
 Deno.test("Stripe processor preserves the atomic RPC contract under Deno", async () => {
   let calls = 0;
-  const response = await processVerifiedStripeEvent(event, async (params) => {
+  const response = await processVerifiedStripeEvent(event, (params) => {
     calls += 1;
     assertEquals(params.p_event_id, "evt_deno_processor");
     assertEquals(params.p_decision_kind, "upsert_subscription");
-    return { result: "applied", status: "active" };
+    return Promise.resolve({ result: "applied", status: "active" });
   });
 
   assertEquals(calls, 1);
@@ -36,21 +36,26 @@ Deno.test("Stripe processor preserves the atomic RPC contract under Deno", async
 });
 
 Deno.test("Stripe processor hydrates delayed mutable events under Deno", async () => {
-  const hydrated = await hydrateMutableSubscriptionEvent(event, async (id) => ({
-    id,
-    status: "past_due",
-    customer: "cus_deno",
-    metadata: { restaurant_id: "11111111-0000-0000-0000-000000000001" },
-  }));
+  const hydrated = await hydrateMutableSubscriptionEvent(
+    event,
+    (id) =>
+      Promise.resolve({
+        id,
+        status: "past_due",
+        customer: "cus_deno",
+        metadata: { restaurant_id: "11111111-0000-0000-0000-000000000001" },
+      }),
+  );
   assertEquals(hydrated.data.object.status, "past_due");
 });
 
 Deno.test("Stripe processor does not swallow a retryable persistence error", async () => {
   await assertRejects(
     () =>
-      processVerifiedStripeEvent(event, async () => {
-        throw new Error("transient database error");
-      }),
+      processVerifiedStripeEvent(
+        event,
+        () => Promise.reject(new Error("transient database error")),
+      ),
     Error,
     "transient database error",
   );

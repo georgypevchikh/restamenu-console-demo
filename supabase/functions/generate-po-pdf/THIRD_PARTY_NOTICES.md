@@ -6,14 +6,16 @@ location.
 
 ## Embedded Roboto files
 
-Pinned npm source: [`@expo-google-fonts/roboto@0.4.3`](https://www.npmjs.com/package/@expo-google-fonts/roboto/v/0.4.3)
+Pinned npm source:
+[`@expo-google-fonts/roboto@0.4.3`](https://www.npmjs.com/package/@expo-google-fonts/roboto/v/0.4.3)
 
-Upstream repository: [`expo/google-fonts`, `font-packages/roboto`](https://github.com/expo/google-fonts/tree/main/font-packages/roboto)
+Upstream repository:
+[`expo/google-fonts`, `font-packages/roboto`](https://github.com/expo/google-fonts/tree/main/font-packages/roboto)
 
-| Source file in the npm tarball | Bytes | SHA-256 |
-|---|---:|---|
+| Source file in the npm tarball     |   Bytes | SHA-256                                                            |
+| ---------------------------------- | ------: | ------------------------------------------------------------------ |
 | `400Regular/Roboto_400Regular.ttf` | 159,108 | `15256405ecb0d880678833a582760efad538ab2932318b52c8105b267d159459` |
-| `700Bold/Roboto_700Bold.ttf` | 159,900 | `4aaf8c5b661a386998c2e70cf2b87e2440f5404e0b8fd81164f0413fb3435ec6` |
+| `700Bold/Roboto_700Bold.ttf`       | 159,900 | `4aaf8c5b661a386998c2e70cf2b87e2440f5404e0b8fd81164f0413fb3435ec6` |
 
 For deployment portability, these exact TTF byte streams are deterministically
 gzip-compressed and base64-encoded in
@@ -35,7 +37,8 @@ source of the font bytes and license.
 ## PDF libraries
 
 - [`pdf-lib@1.17.1`](https://www.npmjs.com/package/pdf-lib/v/1.17.1) - MIT.
-- [`@pdf-lib/fontkit@1.1.1`](https://www.npmjs.com/package/@pdf-lib/fontkit/v/1.1.1) - MIT.
+- [`@pdf-lib/fontkit@1.1.1`](https://www.npmjs.com/package/@pdf-lib/fontkit/v/1.1.1) -
+  MIT.
 
 `fontkit` subsets the embedded fonts per generated document. Roboto covers the
 Latin Extended and Cyrillic characters required by this demo. Characters not

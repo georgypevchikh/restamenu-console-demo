@@ -98,7 +98,9 @@ export function buildAuthorizeUrl(params: {
   // invalid_scope; it requires %20. URLSearchParams encodes spaces as '+', so
   // append scope separately with encodeURIComponent (which emits %20).
   const scope = params.scopes ?? XERO_SCOPES;
-  return `${XERO_AUTHORIZE_URL}?${q.toString()}&scope=${encodeURIComponent(scope)}`;
+  return `${XERO_AUTHORIZE_URL}?${q.toString()}&scope=${
+    encodeURIComponent(scope)
+  }`;
 }
 
 export interface XeroTokens {

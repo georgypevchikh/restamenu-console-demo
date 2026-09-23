@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getRestaurantContext } from "@/lib/current-restaurant";
 import { edgeFunctionUrl } from "@/lib/edge";
+import { SUPABASE_PUBLIC_KEY } from "@/lib/supabase/key";
 
 /**
  * Browser-facing PDF download. Proxies to the generate-po-pdf Edge Function
@@ -41,7 +42,7 @@ export async function GET(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`,
-        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        apikey: SUPABASE_PUBLIC_KEY,
         "X-Restamenu-Restaurant-Id": context.active.id,
       },
       body: JSON.stringify({ poId: id }),

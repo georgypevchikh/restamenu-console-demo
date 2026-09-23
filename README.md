@@ -352,8 +352,11 @@ Fill only the public project values used by the authenticated client:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...   # preferred
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...                         # legacy fallback (local CLI / CI)
 ```
+
+Edge Functions read `SUPABASE_SECRET_KEYS` / `SUPABASE_PUBLISHABLE_KEYS` (injected by the Supabase runtime) and fall back to the legacy `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_ANON_KEY`, so legacy JWT keys can be disabled in the dashboard without a code change.
 
 Apply [`supabase/migrations`](supabase/migrations) in numeric order, create demo Auth users, then run [`supabase/seed.sql`](supabase/seed.sql). Migration `011` expects the n8n webhook URL to exist in Supabase Vault under `n8n_urgent_webhook_url`; it is never committed to this repository.
 

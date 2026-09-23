@@ -1,11 +1,11 @@
 /**
  * Supabase clients for Edge Functions.
  *
- * serviceClient(): service_role — bypasses RLS. Only for writes that have no
- * user in the loop (webhook processing, token storage, OTP internals). The
- * key never leaves the function runtime.
+ * serviceClient(): secret key (service_role Postgres role) — bypasses RLS.
+ * Only for writes that have no user in the loop (webhook processing, token
+ * storage, OTP internals). The key never leaves the function runtime.
  *
- * userClient(req): anon key + the caller's own Authorization header — RLS
+ * userClient(req): publishable key + the caller's own Authorization header — RLS
  * applies exactly as it does in the app, so tenant checks stay in Postgres.
  */
 
@@ -17,10 +17,30 @@ function requiredEnv(name: string): string {
   return value;
 }
 
+/**
+ * Pick a key from the runtime's JSON key dictionary (SUPABASE_SECRET_KEYS /
+ * SUPABASE_PUBLISHABLE_KEYS, keyed by key name), falling back to the legacy
+ * JWT env var. Once legacy keys are disabled in the dashboard only the new
+ * keys work, so the new ones must win whenever the runtime provides them.
+ */
+export function apiKey(dictionaryEnv: string, legacyEnv: string): string {
+  const raw = Deno.env.get(dictionaryEnv);
+  if (raw) {
+    try {
+      const keys = JSON.parse(raw) as Record<string, string>;
+      const key = keys["default"] ?? Object.values(keys)[0];
+      if (key) return key;
+    } catch {
+      // Malformed dictionary: fall through to the legacy key.
+    }
+  }
+  return requiredEnv(legacyEnv);
+}
+
 export function serviceClient(): SupabaseClient {
   return createClient(
     requiredEnv("SUPABASE_URL"),
-    requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
+    apiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SERVICE_ROLE_KEY"),
     { auth: { persistSession: false } },
   );
 }
@@ -28,7 +48,7 @@ export function serviceClient(): SupabaseClient {
 export function userClient(req: Request): SupabaseClient {
   return createClient(
     requiredEnv("SUPABASE_URL"),
-    requiredEnv("SUPABASE_ANON_KEY"),
+    apiKey("SUPABASE_PUBLISHABLE_KEYS", "SUPABASE_ANON_KEY"),
     {
       auth: { persistSession: false },
       global: {

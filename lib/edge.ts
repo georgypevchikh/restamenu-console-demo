@@ -1,4 +1,5 @@
 import { getRestaurantContext } from "@/lib/current-restaurant";
+import { SUPABASE_PUBLIC_KEY } from "@/lib/supabase/key";
 
 /** Edge Function names are internal identifiers: lowercase, digits, dashes. */
 const EDGE_FUNCTION_NAME = /^[a-z0-9-]+$/;
@@ -64,7 +65,7 @@ export async function invokeEdge(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`,
-        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        apikey: SUPABASE_PUBLIC_KEY,
         "X-Restamenu-Restaurant-Id": context.active.id,
       },
       body: JSON.stringify(body),

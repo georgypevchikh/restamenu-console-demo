@@ -21,9 +21,9 @@
 
 ## Why this demo exists
 
-Restamenu is an inventory and purchasing product for restaurant teams. The main mobile application is private and in active development, so this repository turns its most important engineering properties into public, inspectable proof.
+Restamenu is an inventory and purchasing product for restaurant teams. The main mobile application is private: after discovery with 3 restaurants in Vilnius, a test build was piloted by one bar team to count bar stock. This repository turns its most important engineering properties into public, inspectable proof.
 
-This is not a static portfolio mockup. It is a deployed application with two live tenants, role-based users, database-enforced isolation, real Postgres migrations, integration tests, and an event-driven Telegram automation.
+This is not a static portfolio mockup. It is a deployed application with two live tenants, role-based users, database-enforced isolation, real Postgres migrations, integration tests, and an event-driven Telegram automation (live in July 2026; the n8n delivery host is currently offline).
 
 > **The central design decision:** tenant isolation lives in the database, not in a client-side filter. If application code supplies the wrong `restaurant_id`, Postgres returns zero rows or rejects the write.
 
@@ -55,7 +55,7 @@ Suggested proof path:
 | Roles affect authorization, not just presentation | Manager/team membership is stored in `restaurant_members` and evaluated by database policies. |
 | Server rendering does not expose privileged credentials | Server Components fetch with the authenticated user's session; the application does not use `service_role`. |
 | Security behavior cannot silently regress | Typecheck, ESLint, production build and 183 application tests run on every pull request and push to `main`, plus Deno checks and 26 Edge-runtime tests for the Edge Function layer. |
-| Urgent operations produce a real external action | An urgent purchase request triggers a database function, `pg_net`, n8n and a Telegram alert. |
+| Urgent operations produce a real external action | An urgent purchase request triggers a database function, `pg_net` and an n8n webhook that posted a Telegram alert. The n8n delivery host has been offline since August 2026; the database side still runs, and the screenshots below are from the live July runs. |
 | Paid features are enforced by the database, not the UI | Stripe test-mode subscriptions arrive via signed, idempotent webhooks; a trigger grants/revokes the `billing_pro` entitlement, and RPCs re-check it in Postgres. |
 | Financial arithmetic is deterministic and reviewable | The tax engine works in integer minor units with versioned, effective-dated rule sets; every document stores an immutable calculation trace, and the same code passes the same tests under Node and Deno. |
 | High-stakes actions demand a second factor | Purchase-order approval requires an SMS/WhatsApp OTP: hash-only storage, cooldowns, per-phone/per-IP caps and a single-use challenge consumed transactionally. |
@@ -105,7 +105,7 @@ An approved order pushes to Xero as a draft ACCPAY bill, with the tax computed b
 
 ### Transactional outbox → n8n → Telegram
 
-Domain events are delivered through the outbox with idempotency and retry. Successful executions in n8n, and the resulting Telegram notifications:
+Domain events are delivered through the outbox with idempotency and retry. Successful executions in n8n, and the resulting Telegram notifications (July 2026 runs; the n8n host is currently offline):
 
 <p align="center">
   <img src="docs/images/proof-n8n-outbox-runs.png" alt="n8n execution list for the Restamenu outbox delivery workflow" width="900" />
@@ -139,7 +139,7 @@ All of the above lives in one multi-tenant Postgres database, under Row-Level Se
 
 - **Supabase Auth** for four demo identities.
 - **Postgres 17** as the source of truth.
-- **28 ordered SQL migrations** for schema, RLS, helper functions, automation, billing, versioned tax rules, purchase orders, Xero sync, OTP and the transactional outbox.
+- **29 ordered SQL migrations** for schema, RLS, helper functions, automation, billing, versioned tax rules, purchase orders, Xero sync, OTP and the transactional outbox.
 - **Row Level Security** across the tenant data model.
 - `SECURITY DEFINER` helpers for non-recursive membership checks.
 - **Supabase Vault** for the automation webhook secret.
@@ -326,7 +326,7 @@ app/                         Next.js routes and Server Components
 ├── dashboard/               Products, requests, orders, billing, audit, settings
 components/                  Responsive UI components
 lib/supabase/                Browser and server Supabase clients
-supabase/migrations/         28 ordered migrations (schema → RLS → billing → tax → PO → Xero → OTP → outbox)
+supabase/migrations/         29 ordered migrations (schema → RLS → billing → tax → PO → Xero → OTP → outbox)
 supabase/functions/          9 Deno Edge Functions + runtime-agnostic _shared/core
 tests/                       Isolation, billing, Xero, tax, OTP, PDF, seed and contract tests
 .github/workflows/ci.yml     Typecheck → lint → build → app tests → Deno checks/tests

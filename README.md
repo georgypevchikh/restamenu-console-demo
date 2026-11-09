@@ -54,7 +54,7 @@ Suggested proof path:
 | Writes cannot cross the tenant boundary | A Bella Italia session attempts a Sakura House `INSERT`; Postgres rejects it with `42501`. |
 | Roles affect authorization, not just presentation | Manager/team membership is stored in `restaurant_members` and evaluated by database policies. |
 | Server rendering does not expose privileged credentials | Server Components fetch with the authenticated user's session; the application does not use `service_role`. |
-| Security behavior cannot silently regress | Typecheck, ESLint, production build and 183 application tests run on every pull request and push to `main`, plus Deno checks and 26 Edge-runtime tests for the Edge Function layer. |
+| Security behavior cannot silently regress | Typecheck, ESLint, production build and 186 application tests run on every pull request and push to `main`, plus Deno checks and 30 Edge-runtime tests for the Edge Function layer. |
 | Urgent operations produce a real external action | An urgent purchase request triggers a database function, `pg_net` and an n8n webhook that posted a Telegram alert. The n8n delivery host has been offline since August 2026; the database side still runs, and the screenshots below are from the live July runs. |
 | Paid features are enforced by the database, not the UI | Stripe test-mode subscriptions arrive via signed, idempotent webhooks; a trigger grants/revokes the `billing_pro` entitlement, and RPCs re-check it in Postgres. |
 | Financial arithmetic is deterministic and reviewable | The tax engine works in integer minor units with versioned, effective-dated rule sets; every document stores an immutable calculation trace, and the same code passes the same tests under Node and Deno. |
